@@ -1,0 +1,53 @@
+import { BeforeInsertEvent, BeforeUpdateEvent } from "../events";
+import { IBlameableBehaviorOptions, BehaviorType } from "../defs";
+import { Collection } from "../models/Collection";
+import { MissingContextForBehaviorException } from "../exceptions";
+
+export default function blameable(
+  options: IBlameableBehaviorOptions = {}
+): BehaviorType {
+  const fields = options.fields || {
+    createdBy: "createdBy",
+    updatedBy: "updatedBy",
+  };
+  const userIdFieldInContext = "userId";
+
+  const extractUserID = (context) => {
+    if (!context) {
+      return null;
+    }
+
+    return context[userIdFieldInContext] || null;
+  };
+
+  return (collection: Collection<any>) => {
+    collection.localEventManager.addListener(
+      BeforeInsertEvent,
+      (e: BeforeInsertEvent) => {
+        const userId = extractUserID(e.data.context);
+        const document = e.data.document;
+
+        Object.assign(document, {
+          [fields.createdBy]: userId,
+          [fields.updatedBy]: userId,
+        });
+      }
+    );
+
+    collection.localEventManager.addListener(
+      BeforeUpdateEvent,
+      (e: BeforeUpdateEvent) => {
+        const userId = extractUserID(e.data.context);
+        const update = e.data.update;
+
+        if (!update.$set) {
+          update.$set = {};
+        }
+
+        Object.assign(update.$set, {
+          [fields.updatedBy]: userId,
+        });
+      }
+    );
+  };
+}

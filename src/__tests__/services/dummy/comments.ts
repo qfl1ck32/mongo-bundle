@@ -1,0 +1,61 @@
+import { Collection, Type } from "../../..";
+import { ObjectID } from "mongodb";
+import { User, Users } from "./users";
+import { Post, Posts } from "./posts";
+
+export class Comment {
+  _id: ObjectID;
+  title: string;
+  date: Date;
+
+  // virtual
+  titleAndDate: string;
+
+  // virtual
+  get titleWithUserId() {
+    return this.title + " " + this.userId;
+  }
+
+  userId: ObjectID;
+  @Type(() => User)
+  user: User;
+
+  postId: ObjectID;
+  @Type(() => Post)
+  post: Post;
+}
+
+export class Comments extends Collection<Comment> {
+  static model = Comment;
+  static collectionName = "comments";
+
+  static links = {
+    post: {
+      collection: () => Posts,
+      field: "postId",
+    },
+    user: {
+      collection: () => Users,
+      field: "userId",
+    },
+  };
+
+  static reducers = {
+    titleAndDate: {
+      dependency: {
+        title: 1,
+        date: 1,
+      },
+      reduce({ title, date }) {
+        return `${title} - ${date.getTime()}`;
+      },
+    },
+  };
+
+  static expanders = {
+    titleWithUserId: {
+      title: 1,
+      userId: 1,
+    },
+  };
+}
