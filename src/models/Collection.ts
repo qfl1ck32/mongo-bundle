@@ -24,6 +24,7 @@ import {
   Event,
   ContainerInstance,
   Service,
+  IEventConstructor,
 } from "@kaviar/core";
 import { DatabaseService } from "../services/DatabaseService";
 import { plainToClass } from "class-transformer";
@@ -470,7 +471,7 @@ export abstract class Collection<T = any> implements ICollection {
    * @param collectionEvent This is the class of the event
    * @param handler This is the function that is executed
    */
-  on(collectionEvent: new () => Event, handler: any) {
+  on(collectionEvent: IEventConstructor<any>, handler: any) {
     this.localEventManager.addListener(collectionEvent, handler);
   }
 
@@ -498,7 +499,7 @@ export abstract class Collection<T = any> implements ICollection {
     ast: any,
     config?: IAstToQueryOptions
   ): Promise<Array<Partial<T>>> {
-    const result = query.graphql(this, ast, config).fetch();
+    const result = await query.graphql(this, ast, config).fetch();
 
     return this.toModel(result);
   }
@@ -510,7 +511,7 @@ export abstract class Collection<T = any> implements ICollection {
    */
   async queryOneGraphQL(ast, config?: IAstToQueryOptions): Promise<Partial<T>> {
     const model = this.getStaticVariable("model");
-    const result = query.graphql(this, ast, config).fetchOne();
+    const result = await query.graphql(this, ast, config).fetchOne();
 
     return this.toModel(result);
   }

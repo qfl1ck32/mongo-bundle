@@ -1,40 +1,14 @@
-<h1 align="center">KAVIAR MONGO BUNDLE</h1>
+The MongoBundle offers integration with MongoDB database by allowing you to hook into events, giving ability to work with model classes and add behaviors. As well it is integrated with `@kaviar/nova` package which allows extremely rapid queries for relational data.
 
-<p align="center">
-  <a href="https://travis-ci.org/kaviarjs/mongo-bundle">
-    <img src="https://api.travis-ci.org/kaviarjs/mongo-bundle.svg?branch=master" />
-  </a>
-  <a href="https://coveralls.io/github/kaviarjs/loader?branch=master">
-    <img src="https://coveralls.io/repos/github/kaviarjs/loader/badge.svg?branch=master" />
-  </a>
-</p>
-
-<br />
-<br />
-
-This function is for loading your GraphQL API seamlessly from multiple places (folders, files, npm packages, etc) so you can have them merged when you start your server. The basic scenario here is that you would have a startup file which loads all your modules which use a defined `loader`. And after that you import the file which starts the server and uses your `loader` to get the schema.
-
-## Install
-
+```bash
+npm install --save @kaviar/mongo-bundle @kaviar/nova
 ```
-npm install --save @kaviar/mongo-bundle
-```
-
-## Documentation
-
-Table of Contents:
-
-- [Basic Setup](#basic-setup)
-- [Collections](#collections)
-- [Events](#events)
-- [Integration with Nova](#integration-with-nova)
-- [Behaviors](#behaviors)
-- [Models](#models)
-- [Transactions](#transactions)
 
 ## Basic Setup
 
 ```js
+import { MongoBundle } from "@kaviar/mongo-bundle";
+
 new MongoBundle({
   uri: "mongodb://localhost:27017/test",
 
@@ -47,6 +21,8 @@ new MongoBundle({
 ## Collections
 
 ```typescript
+import { Collection } from "@kaviar/mongo-bundle";
+
 type User = {
   firstName: string;
   lastName: string;
@@ -63,7 +39,7 @@ class UsersCollection extends Collection<User> {
 }
 ```
 
-As with everything in Kaviar's world, you get the instance via the container, for that you'd have to work within your application bundle. If you feel stuck, go to https://github.com/kaviarjs/core and freshen-up the concepts.
+As with everything in Kaviar's world, you get the instance via the container, for that you'd have to work within your application bundle.
 
 ```typescript
 const usersCollection = container.get(UsersCollection);
@@ -102,18 +78,20 @@ Available events that can be imported from the package:
 They are very explicit and typed with what they contain, a sample usage would be:
 
 ```typescript
+import { BeforeInsertEvent } from "@kaviar/mongo-bundle";
+
 eventManager.addListener(AfterInsertEvent, async (e: AfterInsertEvent) => {
   if (e.collection instanceof PostsCollection) {
     // Do something with the newly inserted Post
-    const postBody = e.document;
-    const postId = e.result.insertedId;
+    const postBody = e.data.document;
+    const postId = e.data.result.insertedId;
   }
 });
 
 // or simply do it on postsCollection.localEventManager
 ```
 
-Events should be attached in the `initialisation` phase of your bundle.
+Events should be attached in the `prepare()` phase of your bundle.
 
 Events also receive a `context` variable. Another difference from classic MongoDB node collection operations is that we allow a `context` variable inside it that can be anything. That variable reaches the event listeners. It will be useful if we want to pass things such as an `userId` if we want some blameable behavior. You will understand more in the **Behaviors** section.
 
@@ -182,7 +160,7 @@ import { Behaviors, Collection } from "@kaviar/nova";
 
 class UsersCollection extends Collection {
   static behaviors = [
-    Behaviors.timestampable({
+    Behaviors.Timestampable({
       // optional config
       fields: {
         // mention the actual field names to be saved
@@ -190,7 +168,7 @@ class UsersCollection extends Collection {
         updatedAt: "updatedAt",
       },
     }),
-    Behaviors.blameable({
+    Behaviors.Blameable({
       // optional config
       fields: {
         createdBy: "createdBy",
@@ -253,7 +231,7 @@ const user = usersCollection.queryOne({
 
 user instanceof User;
 
-user.fullName; // will automatically map it
+user.fullName; // will automatically map it to User model class
 ```
 
 Now, if you want to query only for fullName, because that's what you care about, you'll have to use expanders. Expanders are a way to say "I want to compute this value, not Nova, so when I request this field, I need you to actually fetch me these other fields"
@@ -352,7 +330,7 @@ const user = usersCollection.queryOne({
   },
 });
 
-// user.comments will be an Array of Comment
+// user.comments will be an Array of Comment objects
 ```
 
 ## Transactions
@@ -369,7 +347,3 @@ await dbService.transact((session) => {
 ```
 
 The beautiful thing is that any kind of exception will result in transaction revertion. If you want to have event listeners that don't fail transactions, you simply wrap them in such a way that their promises resolve.
-
-## End
-
-That's all folks, enjoy coding!

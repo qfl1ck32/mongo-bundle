@@ -1,7 +1,8 @@
 {
   "name": "@kaviar/mongo-bundle",
   "version": "1.0.0",
-  "description": "Kaviar MongoDB Bundle",
+  "private": true,
+  "description": "Easy MongoDB solution designed for Kaviar Framework.",
   "main": "dist/index.js",
   "repository": {
     "type": "git",
@@ -29,12 +30,14 @@
     "@kaviar/core": "^1.0.1",
     "@kaviar/validator": "^1.0.0",
     "@kaviar/nova": "^1.0.0",
+    "@kaviar/logger-bundle": "^1.0.0",
     "class-transformer": "^0.2.3"
   },
   "devDependencies": {
     "@kaviar/core": "^1.0.1",
     "@kaviar/validator": "^1.0.0",
     "@kaviar/nova": "^1.0.0",
+    "@kaviar/logger-bundle": "^1.0.0",
     "@types/chai": "^4.2.3",
     "@types/chai-as-promised": "^7.1.2",
     "@types/graphql": "^0.11.3",

@@ -9,12 +9,19 @@ export interface IMongoBundleConfigType {
 }
 
 export class MongoBundle extends Bundle<IMongoBundleConfigType> {
+  async validate(config: IMongoBundleConfigType) {
+    if (!config.uri) {
+      throw new Error(`Please specify the "uri" parameter for MongoBundle.`);
+    }
+  }
+
   async prepare() {
     this.container.set(MONGO_URL, this.config.uri);
     this.container.set(MONGO_CONNECTION_OPTIONS, this.config.options || {});
+  }
+
+  async init() {
     const databaseService = this.container.get(DatabaseService);
     await databaseService.init();
   }
-
-  async init() {}
 }

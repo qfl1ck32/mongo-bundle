@@ -10,6 +10,7 @@ import {
 import { MONGO_CONNECTION_OPTIONS, MONGO_URL } from "../constants";
 import { Collection } from "../models/Collection";
 import { IGetFieldsResponse } from "../defs";
+import { LoggerService } from "@kaviar/logger-bundle";
 
 @Service()
 export class DatabaseService {
@@ -19,6 +20,7 @@ export class DatabaseService {
   constructor(
     @Inject(MONGO_URL) protected readonly mongoUrl,
     @Inject(MONGO_CONNECTION_OPTIONS) protected readonly mongoConnectionOptions,
+    protected readonly logger: LoggerService,
     protected readonly container: ContainerInstance
   ) {
     this.client = new MongoClient(mongoUrl, {
@@ -29,14 +31,16 @@ export class DatabaseService {
   }
 
   async init() {
-    console.log(`Connecting to database: ${this.mongoUrl}...`);
+    this.logger.info(`Connecting to MongoDB database...`);
     try {
       await this.client.connect();
     } catch (e) {
-      console.error("An error occurred while connecting to the database.");
+      this.logger.error(
+        `An error occurred while connecting to the database: ${e.toString()}`
+      );
       throw e;
     }
-    console.log(`Connected to the database.`);
+    this.logger.info(`Connected to the database.`);
     this.db = this.client.db();
   }
 

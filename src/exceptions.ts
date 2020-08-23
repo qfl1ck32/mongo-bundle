@@ -21,4 +21,8 @@ export class MissingCollectionNameException extends Exception {
   }
 }
 
-export class DocumentNotFoundException extends Exception {}
+export class DocumentNotFoundException extends Exception {
+  getMessage() {
+    return "The document with the specified filters could not be found";
+  }
+}
