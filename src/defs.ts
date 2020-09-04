@@ -1,6 +1,6 @@
 import { Collection } from "./models/Collection";
 import { ILinkCollectionOptions } from "@kaviar/nova";
-import { ValidateOptions } from "@kaviar/validator";
+import { ValidateOptions } from "@kaviar/validator-bundle";
 
 export type BehaviorType = (collectionEventManager: Collection<any>) => void;
 

@@ -1,6 +1,6 @@
 import { Collection } from "../models/Collection";
 import { IValidateBehaviorOptions, IContextAware } from "../defs";
-import { ValidatorService } from "@kaviar/validator";
+import { ValidatorService } from "@kaviar/validator-bundle";
 import {
   BeforeInsertEvent,
   BeforeUpdateEvent,

@@ -1,7 +1,7 @@
 import { createEcosystem } from "../helpers";
 import { Collection } from "../..";
 import validate from "../../behaviors/validate";
-import { Schema, Is, a, ValidationError } from "@kaviar/validator";
+import { Schema, Is, a, ValidationError } from "@kaviar/validator-bundle";
 
 describe("Validate behavior", () => {
   it("Should be able to validate on insert and update", async () => {
