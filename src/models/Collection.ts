@@ -455,7 +455,8 @@ export abstract class Collection<T = any> implements ICollection {
 
       adaptedLinks[key] = {
         ...links[key],
-        collection: () => this.getCollection(collectionBaseClassResolver()),
+        collection: () =>
+          this.getCollection(collectionBaseClassResolver(this.container)),
       };
     }
 

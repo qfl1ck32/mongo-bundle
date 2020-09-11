@@ -1,6 +1,7 @@
 import { Collection } from "./models/Collection";
 import { ILinkCollectionOptions } from "@kaviar/nova";
 import { ValidateOptions } from "@kaviar/validator-bundle";
+import { ContainerInstance, Constructor } from "@kaviar/core";
 
 export type BehaviorType = (collectionEventManager: Collection<any>) => void;
 
@@ -41,7 +42,7 @@ type Modify<T, R> = Omit<T, keyof R> & R;
 
 export interface IBundleLinkCollectionOption
   extends Omit<ILinkCollectionOptions, "collection"> {
-  collection: () => { new (...args: any[]): Collection<any> };
+  collection: (container: ContainerInstance) => Constructor<Collection>;
 }
 
 export interface IBundleLinkOptions {
