@@ -1,7 +1,6 @@
 {
   "name": "@kaviar/mongo-bundle",
   "version": "1.0.0",
-  "private": true,
   "description": "Easy MongoDB solution designed for Kaviar Framework.",
   "main": "dist/index.js",
   "repository": {
