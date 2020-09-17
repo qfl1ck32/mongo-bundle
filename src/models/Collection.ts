@@ -103,7 +103,7 @@ export abstract class Collection<T = any> implements ICollection {
    * @param filter
    * @param options
    */
-  find(filter: FilterQuery<T> = {}, options?: FindOneOptions): Cursor<T> {
+  find(filter: FilterQuery<T> = {}, options?: FindOneOptions<any>): Cursor<T> {
     const cursor = this.collection.find(filter, options);
 
     const oldToArray = cursor.toArray.bind(cursor);
@@ -122,7 +122,7 @@ export abstract class Collection<T = any> implements ICollection {
    */
   async findOne(
     query: FilterQuery<T> = {},
-    options?: FindOneOptions
+    options?: FindOneOptions<any>
   ): Promise<T> {
     const result = await this.collection.findOne(query, options);
 
@@ -318,7 +318,7 @@ export abstract class Collection<T = any> implements ICollection {
 
   async findOneAndDelete(
     filters: FilterQuery<T> = {},
-    options?: IContextAware & FindOneAndDeleteOption
+    options?: IContextAware & FindOneAndDeleteOption<any>
   ): Promise<FindAndModifyWriteOpResultObject<T>> {
     await this.emit(
       new BeforeRemoveEvent({
@@ -349,7 +349,7 @@ export abstract class Collection<T = any> implements ICollection {
   async findOneAndUpdate(
     filters: FilterQuery<T> = {},
     update: UpdateQuery<T>,
-    options: IContextAware & FindOneAndUpdateOption = {}
+    options: IContextAware & FindOneAndUpdateOption<any> = {}
   ): Promise<FindAndModifyWriteOpResultObject<T>> {
     const fields = this.databaseService.getFields(update);
 

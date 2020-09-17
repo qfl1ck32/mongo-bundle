@@ -182,7 +182,7 @@ export default function validate(behaviorOptions: IValidateBehaviorOptions) {
     collection.findOneAndUpdate = async (
       filter: FilterQuery<any> = {},
       update: UpdateQuery<any>,
-      options: IContextAware & FindOneAndUpdateOption = {}
+      options: IContextAware & FindOneAndUpdateOption<any> = {}
     ) => {
       let result;
       const fields = dbService.getFields(update);
