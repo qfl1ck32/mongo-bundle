@@ -30,7 +30,7 @@
     "@kaviar/validator-bundle": "^1.0.0",
     "@kaviar/nova": "^1.0.0",
     "@kaviar/logger-bundle": "^1.0.0",
-    "class-transformer": "^0.2.3"
+    "class-transformer": "^0.3.1"
   },
   "devDependencies": {
     "@kaviar/core": "^1.0.1",
@@ -46,7 +46,7 @@
     "@typescript-eslint/parser": "2.3.0",
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
-    "class-transformer": "^0.2.3",
+    "class-transformer": "^0.3.1",
     "eslint": "^6.6.0",
     "eslint-config-prettier": "6.3.0",
     "eslint-plugin-prettier": "3.1.1",
