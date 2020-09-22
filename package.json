@@ -1,6 +1,6 @@
 {
   "name": "@kaviar/mongo-bundle",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Easy MongoDB solution designed for Kaviar Framework.",
   "main": "dist/index.js",
   "repository": {
@@ -23,17 +23,17 @@
   },
   "dependencies": {
     "mongodb": "^3.5.7",
-    "@types/mongodb": "^3.5.16"
-  },
-  "peerDependencies": {
-    "@kaviar/core": "^1.0.1",
-    "@kaviar/validator-bundle": "^1.0.0",
-    "@kaviar/nova": "^1.0.0",
-    "@kaviar/logger-bundle": "^1.0.0",
+    "@types/mongodb": "^3.5.16",
     "class-transformer": "^0.3.1"
   },
+  "peerDependencies": {
+    "@kaviar/core": "^1.1.0",
+    "@kaviar/validator-bundle": "^1.0.0",
+    "@kaviar/nova": "^1.0.0",
+    "@kaviar/logger-bundle": "^1.0.0"
+  },
   "devDependencies": {
-    "@kaviar/core": "^1.0.1",
+    "@kaviar/core": "^1.1.0",
     "@kaviar/logger-bundle": "^1.0.0",
     "@kaviar/nova": "^1.0.0",
     "@kaviar/validator-bundle": "^1.0.0",
