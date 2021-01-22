@@ -50,13 +50,13 @@ export class AfterUpdateEvent extends CollectionEvent<{
 }> {}
 
 export class BeforeRemoveEvent extends CollectionEvent<{
-  filter: object;
+  filter: FilterQuery<any>;
   isMany: boolean;
   context: any;
 }> {}
 
 export class AfterRemoveEvent extends CollectionEvent<{
-  filter: object;
+  filter: FilterQuery<any>;
   isMany: boolean;
   context: any;
   result: DeleteWriteOpResultObject | FindAndModifyWriteOpResultObject<any>;

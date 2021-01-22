@@ -107,8 +107,8 @@ export abstract class Collection<T = any> implements ICollection {
     const cursor = this.collection.find(filter, options);
 
     const oldToArray = cursor.toArray.bind(cursor);
-    cursor.toArray = async () => {
-      const result = await oldToArray(...arguments);
+    cursor.toArray = async (...rest) => {
+      const result = await oldToArray(...rest);
       return this.toModel(result);
     };
 
@@ -133,6 +133,8 @@ export abstract class Collection<T = any> implements ICollection {
     document: any,
     options: IContextAware & CollectionInsertOneOptions = {}
   ): Promise<InsertOneWriteOpResult<any>> {
+    options.context = options.context || {};
+
     const eventData = {
       document,
       context: options.context,
@@ -161,6 +163,7 @@ export abstract class Collection<T = any> implements ICollection {
     documents: any[],
     options: IContextAware & CollectionInsertOneOptions = {}
   ): Promise<InsertWriteOpResult<any>> {
+    options.context = options.context || {};
     const events = [];
 
     documents.forEach((document) => {
@@ -172,7 +175,7 @@ export abstract class Collection<T = any> implements ICollection {
       );
     });
 
-    for (let event of events) {
+    for (const event of events) {
       await this.emit(event);
     }
 
@@ -199,6 +202,7 @@ export abstract class Collection<T = any> implements ICollection {
     update: UpdateQuery<T>,
     options: IContextAware & UpdateOneOptions = {}
   ): Promise<UpdateWriteOpResult> {
+    options.context = options.context || {};
     const fields = this.databaseService.getFields(update);
 
     await this.emit(
@@ -232,6 +236,7 @@ export abstract class Collection<T = any> implements ICollection {
     update: UpdateQuery<T>,
     options: IContextAware & UpdateManyOptions = {}
   ): Promise<UpdateWriteOpResult> {
+    options.context = options.context || {};
     const fields = this.databaseService.getFields(update);
 
     await this.emit(
@@ -264,6 +269,7 @@ export abstract class Collection<T = any> implements ICollection {
     filters: FilterQuery<T>,
     options: IContextAware & CommonOptions = {}
   ): Promise<DeleteWriteOpResultObject> {
+    options.context = options.context || {};
     await this.emit(
       new BeforeRemoveEvent({
         filter: filters,
@@ -294,6 +300,8 @@ export abstract class Collection<T = any> implements ICollection {
     filters: FilterQuery<T>,
     options: IContextAware & CommonOptions = {}
   ): Promise<DeleteWriteOpResultObject> {
+    options.context = options.context || {};
+
     await this.emit(
       new BeforeRemoveEvent({
         filter: filters,
@@ -320,6 +328,8 @@ export abstract class Collection<T = any> implements ICollection {
     filters: FilterQuery<T> = {},
     options?: IContextAware & FindOneAndDeleteOption<any>
   ): Promise<FindAndModifyWriteOpResultObject<T>> {
+    options.context = options.context || {};
+
     await this.emit(
       new BeforeRemoveEvent({
         context: options?.context || {},
@@ -351,6 +361,7 @@ export abstract class Collection<T = any> implements ICollection {
     update: UpdateQuery<T>,
     options: IContextAware & FindOneAndUpdateOption<any> = {}
   ): Promise<FindAndModifyWriteOpResultObject<T>> {
+    options.context = options.context || {};
     const fields = this.databaseService.getFields(update);
 
     await this.emit(
@@ -450,7 +461,7 @@ export abstract class Collection<T = any> implements ICollection {
     const links: IBundleLinkOptions = this.getStaticVariable("links") || {};
     const adaptedLinks: ILinkOptions = {};
 
-    for (let key in links) {
+    for (const key in links) {
       const collectionBaseClassResolver = links[key].collection;
 
       adaptedLinks[key] = {
