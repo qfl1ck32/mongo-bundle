@@ -13,6 +13,8 @@ export class Post {
   authorId: ObjectID;
   @Type(() => User)
   author: User;
+
+  number?: string | number;
 }
 
 export class Posts extends Collection<Post> {

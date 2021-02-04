@@ -42,7 +42,7 @@ import {
   query,
   ICollection,
   ILinkOptions,
-  IQueryBody,
+  QueryBodyType,
   IReducerOptions,
   IExpanderOptions,
   addReducers,
@@ -130,7 +130,7 @@ export abstract class Collection<T = any> implements ICollection {
   }
 
   async insertOne(
-    document: any,
+    document: Partial<T>,
     options: IContextAware & CollectionInsertOneOptions = {}
   ): Promise<InsertOneWriteOpResult<any>> {
     if (options) {
@@ -162,7 +162,7 @@ export abstract class Collection<T = any> implements ICollection {
   }
 
   async insertMany(
-    documents: any[],
+    documents: Partial<T>[],
     options: IContextAware & CollectionInsertOneOptions = {}
   ): Promise<InsertWriteOpResult<any>> {
     if (options) {
@@ -427,7 +427,7 @@ export abstract class Collection<T = any> implements ICollection {
    *
    * @param request
    */
-  async query(request: IQueryBody): Promise<Array<Partial<T>>> {
+  async query(request: QueryBodyType<T>): Promise<Array<Partial<T>>> {
     const results = await query(this, request).fetch();
 
     return this.toModel(results);
@@ -438,7 +438,7 @@ export abstract class Collection<T = any> implements ICollection {
    *
    * @param request
    */
-  async queryOne(request: IQueryBody): Promise<Partial<T>> {
+  async queryOne(request: QueryBodyType<T>): Promise<Partial<T>> {
     const result = await query(this, request).fetchOne();
 
     return this.toModel(result);

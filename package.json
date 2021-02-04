@@ -27,15 +27,15 @@
     "class-transformer": "^0.3.1"
   },
   "peerDependencies": {
-    "@kaviar/core": "^1.1.0",
+    "@kaviar/core": "^1.1.1",
     "@kaviar/validator-bundle": "^1.0.0",
-    "@kaviar/nova": "^1.0.0",
+    "@kaviar/nova": "^1.3.1",
     "@kaviar/logger-bundle": "^1.0.0"
   },
   "devDependencies": {
-    "@kaviar/core": "^1.1.0",
+    "@kaviar/core": "^1.1.1",
     "@kaviar/logger-bundle": "^1.0.0",
-    "@kaviar/nova": "^1.0.0",
+    "@kaviar/nova": "^1.3.1",
     "@kaviar/validator-bundle": "^1.0.0",
     "@types/chai": "^4.2.3",
     "@types/chai-as-promised": "^7.1.2",
