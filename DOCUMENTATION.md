@@ -132,6 +132,7 @@ class PostsCollection extends Collection {
   };
 
   // Nova reducers
+  // Note: reducers include "container" in the context property of their params.
   static reducers = {};
 
   // Nova expanders
