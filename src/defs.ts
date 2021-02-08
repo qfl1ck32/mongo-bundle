@@ -1,9 +1,19 @@
 import { Collection } from "./models/Collection";
-import { ILinkCollectionOptions } from "@kaviar/nova";
+import {
+  IAstToQueryOptions,
+  ILinkCollectionOptions,
+  QueryBodyType,
+} from "@kaviar/nova";
 import { ValidateOptions } from "@kaviar/validator-bundle";
 import { ContainerInstance, Constructor } from "@kaviar/core";
 
 export type BehaviorType = (collectionEventManager: Collection<any>) => void;
+
+declare module "@kaviar/nova" {
+  export interface IQueryContext {
+    container: ContainerInstance;
+  }
+}
 
 export interface IContextAware {
   context?: any;

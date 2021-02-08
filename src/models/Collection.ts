@@ -428,7 +428,9 @@ export abstract class Collection<T = any> implements ICollection {
    * @param request
    */
   async query(request: QueryBodyType<T>): Promise<Array<Partial<T>>> {
-    const results = await query(this, request).fetch();
+    const results = await query(this, request, {
+      container: this.container,
+    }).fetch();
 
     return this.toModel(results);
   }
@@ -439,7 +441,9 @@ export abstract class Collection<T = any> implements ICollection {
    * @param request
    */
   async queryOne(request: QueryBodyType<T>): Promise<Partial<T>> {
-    const result = await query(this, request).fetchOne();
+    const result = await query(this, request, {
+      container: this.container,
+    }).fetchOne();
 
     return this.toModel(result);
   }
@@ -527,7 +531,11 @@ export abstract class Collection<T = any> implements ICollection {
     ast: any,
     config?: IAstToQueryOptions
   ): Promise<Array<Partial<T>>> {
-    const result = await query.graphql(this, ast, config).fetch();
+    const result = await query
+      .graphql(this, ast, config, {
+        container: this.container,
+      })
+      .fetch();
 
     return this.toModel(result);
   }
@@ -539,7 +547,11 @@ export abstract class Collection<T = any> implements ICollection {
    */
   async queryOneGraphQL(ast, config?: IAstToQueryOptions): Promise<Partial<T>> {
     const model = this.getStaticVariable("model");
-    const result = await query.graphql(this, ast, config).fetchOne();
+    const result = await query
+      .graphql(this, ast, config, {
+        container: this.container,
+      })
+      .fetchOne();
 
     return this.toModel(result);
   }
