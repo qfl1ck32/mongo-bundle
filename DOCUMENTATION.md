@@ -97,9 +97,14 @@ Events also receive a `context` variable. Another difference from classic MongoD
 
 ## Integration with Nova
 
-For fetching we use Nova. And the concept is simple:
+### Basics
+
+For fetching we use [Nova](https://www.kaviarjs.com/docs/package-nova). And the concept is simple:
 
 ```typescript
+// Fetch it from the container
+const usersCollection = container.get(UsersCollection);
+
 usersCollection.query({
   $: {
     filters: {
@@ -151,6 +156,29 @@ postsCollection.query({
   },
 });
 ```
+
+### GraphQL
+
+If you are looking to write a [Nova Query](https://www.kaviarjs.com/docs/package-nova#graphql-integration) in your GraphQL resolvers you can do:
+
+```ts
+const resolvers = {
+  Query: {
+    posts(_, args, ctx, ast) {
+      const postsCollection = ctx.container.get(PostsCollection);
+
+      return postsCollection.queryGraphQL(ast, {
+        // These are the AstToQueryOptions presented in the link above as: Nova Query
+        filters: {
+          isApproved: true,
+        },
+      });
+    },
+  },
+};
+```
+
+If you want the query to return a single element, a short-hand function is `postsCollection.queryOneGraphQL()`.
 
 ## Behaviors
 
