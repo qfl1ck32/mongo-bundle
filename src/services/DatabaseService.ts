@@ -53,6 +53,11 @@ export class DatabaseService {
         "Please provide a name for the collection. Did you forget to specify 'static collectionName' in the class?"
       );
     }
+    if (!this.db) {
+      throw new Error(
+        `You're trying to use the collection ${name} but connection to mongo hasn't been established yet. Ensure that you use collections after MongoBundle has been initialised (init() has run).`
+      );
+    }
     return this.db.collection(name);
   }
 
