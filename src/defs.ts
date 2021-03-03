@@ -15,8 +15,11 @@ declare module "@kaviar/nova" {
   }
 }
 
+export interface IExecutionContext {
+  [key: string]: any;
+}
 export interface IContextAware {
-  context?: any;
+  context?: IExecutionContext;
 }
 
 export interface ITimestampableBehaviorOptions {
