@@ -23,13 +23,17 @@
   },
   "dependencies": {
     "@types/mongodb": "^3.5.16",
+<<<<<<< HEAD
+=======
+    "class-transformer": "^0.3.1",
+>>>>>>> updates
     "mongodb": "^3.5.7"
   },
   "peerDependencies": {
     "@kaviar/core": "^1.1.1",
     "@kaviar/logger-bundle": "^1.0.0",
     "@kaviar/nova": "^1.4.0",
-    "@kaviar/ejson": "^1.2.6",
+    "@kaviar/ejson": "^1.2.7",
     "@kaviar/validator-bundle": "^1.0.0"
   },
   "devDependencies": {
