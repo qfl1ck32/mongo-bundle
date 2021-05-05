@@ -15,7 +15,8 @@ import { LoggerService } from "@kaviar/logger-bundle";
 @Service()
 export class DatabaseService {
   public readonly client: MongoClient;
-  protected db: Db;
+  protected afterInitQueue = [];
+  protected _db: Db;
 
   constructor(
     @Inject(MONGO_URL) protected readonly mongoUrl,
@@ -41,7 +42,7 @@ export class DatabaseService {
       throw e;
     }
     this.logger.info(`Connected to the database.`);
-    this.db = this.client.db();
+    this._db = this.client.db();
   }
 
   /**
@@ -50,15 +51,41 @@ export class DatabaseService {
   getMongoCollection(name: string): MongoCollection {
     if (!name) {
       throw new Error(
-        "Please provide a name for the collection. Did you forget to specify 'static collectionName' in the class?"
+        "Please provide a name for the collection. Did you forget to specify 'static collectionName' in the Collection class?"
       );
     }
-    if (!this.db) {
+    if (!this._db) {
       throw new Error(
-        `You're trying to use the collection ${name} but connection to mongo hasn't been established yet. Ensure that you use collections after MongoBundle has been initialised (init() has run).`
+        `You're trying to use the collection "${name}" but connection to MongoDB hasn't been established yet.`
       );
     }
-    return this.db.collection(name);
+    return this._db.collection(name);
+  }
+
+  /**
+   * Knows whether its initialised or not.
+   */
+  get isInitialised(): boolean {
+    return Boolean(this._db);
+  }
+
+  /**
+   * This allows us to set the database properly
+   * @param fn
+   */
+  afterInit(fn: Function) {
+    if (!this.isInitialised) {
+      this.afterInitQueue.push(fn);
+    } else {
+      fn();
+    }
+  }
+
+  /**
+   * Gives you access to the database connection handler
+   */
+  get db(): Db {
+    return this._db;
   }
 
   /**

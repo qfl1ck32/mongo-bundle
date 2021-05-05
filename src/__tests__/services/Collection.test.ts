@@ -71,7 +71,7 @@ describe("Collection", () => {
     assert.isTrue(lifecycle.beforeRemove);
     assert.isTrue(lifecycle.afterRemove);
 
-    teardown();
+    await teardown();
   });
 
   it("Should work with nova integration", async () => {
@@ -128,18 +128,7 @@ describe("Collection", () => {
     assert.lengthOf(foundUser.comments, 2);
     assert.lengthOf(foundUser.posts, 1);
 
-    teardown();
-  });
-
-  it("Should work with indexes", async () => {
-    const { container, teardown } = await createEcosystem();
-    const posts = container.get<Posts>(Posts);
-
-    const result = await posts.collection.listIndexes().toArray();
-
-    // for _id and for authorId
-    assert.lengthOf(result, 2);
-    teardown();
+    await teardown();
   });
 
   it("Should prevent execution/update when event listeners throw", async () => {
@@ -182,7 +171,24 @@ describe("Collection", () => {
       _id: p1.insertedId,
     });
 
-    teardown();
+    await teardown();
+  });
+
+  it("Should work with indexes", async () => {
+    const { container, teardown } = await createEcosystem();
+    const posts = container.get(Posts);
+
+    // Give time for indexes to persist
+    await new Promise<void>((resolve) => {
+      setTimeout(() => {
+        resolve();
+      }, 500);
+    });
+    const result = await posts.collection.listIndexes().toArray();
+
+    // for _id and for authorId
+    assert.lengthOf(result, 2);
+    await teardown();
   });
 
   it("Should work with find and findOne", async () => {
@@ -200,7 +206,7 @@ describe("Collection", () => {
     const postObject = await posts.findOne({});
     assert.instanceOf(postObject, Post);
 
-    teardown();
+    await teardown();
   });
 
   it("Should work with findOneAndSTUFF", async () => {
@@ -228,6 +234,6 @@ describe("Collection", () => {
     result = await posts.findOneAndDelete({ _id: p1.insertedId });
     assert.instanceOf(result.value, Post);
 
-    teardown();
+    await teardown();
   });
 });

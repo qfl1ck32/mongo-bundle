@@ -62,7 +62,7 @@ export abstract class Collection<T = any> implements ICollection {
 
   static collectionName: string;
 
-  public readonly collection: MongoCollection<T>;
+  public collection: MongoCollection<T>;
   /**
    * Refers to the event manager that is only within this collection's context
    */
@@ -77,7 +77,22 @@ export abstract class Collection<T = any> implements ICollection {
   ) {
     this.databaseService = databaseService;
     this.localEventManager = new EventManager();
-    this.collection = databaseService.getMongoCollection(
+
+    if (databaseService.isInitialised) {
+      this.storeCollection();
+    } else {
+      databaseService.afterInit(() => {
+        this.storeCollection();
+      });
+    }
+  }
+
+  get collectionName(): string {
+    return this.collection.collectionName;
+  }
+
+  protected storeCollection() {
+    this.collection = this.databaseService.getMongoCollection(
       this.getStaticVariable("collectionName")
     );
 
@@ -92,10 +107,6 @@ export abstract class Collection<T = any> implements ICollection {
 
     // attach behaviors
     this.attachBehaviors();
-  }
-
-  get collectionName(): string {
-    return this.collection.collectionName;
   }
 
   /**

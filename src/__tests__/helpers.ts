@@ -29,8 +29,8 @@ export async function createEcosystem(
 
   return {
     container: kernel.container,
-    teardown: () => {
-      dbService.client.close();
+    teardown: async () => {
+      await dbService.client.close();
     },
   };
 }

@@ -10,7 +10,7 @@ export class Post {
   @Type(() => Comment)
   comments: Comment[];
 
-  authorId: ObjectID;
+  authorId: ObjectID | any;
   @Type(() => User)
   author: User;
 

@@ -57,6 +57,6 @@ describe("DatabaseService", () => {
     }
 
     assert.isTrue(caught);
-    teardown();
+    await teardown();
   });
 });
