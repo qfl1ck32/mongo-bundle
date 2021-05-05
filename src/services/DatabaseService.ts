@@ -43,6 +43,7 @@ export class DatabaseService {
     }
     this.logger.info(`Connected to the database.`);
     this._db = this.client.db();
+    this.afterInitQueue.forEach((fn) => fn());
   }
 
   /**
