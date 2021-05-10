@@ -1,4 +1,4 @@
-import { Collection, Type } from "../../..";
+import { Collection } from "../../..";
 import { ObjectID } from "mongodb";
 import { Comment, Comments } from "./comments";
 import { User, Users } from "./users";
@@ -7,11 +7,9 @@ export class Post {
   _id: ObjectID;
   title: string;
 
-  @Type(() => Comment)
   comments: Comment[];
 
   authorId: ObjectID | any;
-  @Type(() => User)
   author: User;
 
   number?: string | number;

@@ -27,7 +27,6 @@ import {
   IEventConstructor,
 } from "@kaviar/core";
 import { DatabaseService } from "../services/DatabaseService";
-import { plainToClass } from "class-transformer";
 import {
   BeforeInsertEvent,
   AfterInsertEvent,
@@ -38,6 +37,7 @@ import {
   CollectionEvent,
 } from "../events";
 import { BehaviorType, IContextAware, IBundleLinkOptions } from "../defs";
+import { toModel } from "@kaviar/ejson";
 import {
   query,
   ICollection,
@@ -522,11 +522,15 @@ export abstract class Collection<T = any> implements ICollection {
    * Transforms a plain object to the model
    * @param plain Object which you want to transform
    */
-  toModel(plain: any) {
+  toModel(plain: any | any[]) {
     const model = this.getStaticVariable("model");
 
     if (model) {
-      return plainToClass(model, plain);
+      if (Array.isArray(plain)) {
+        return plain.map((element) => toModel<any>(model, element));
+      }
+
+      return toModel(model, plain);
     }
 
     return plain;

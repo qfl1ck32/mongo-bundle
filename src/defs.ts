@@ -16,8 +16,13 @@ declare module "@kaviar/nova" {
 }
 
 export interface IExecutionContext {
+  /**
+   * This userId is needed for blamable behaviors. You can omit it if it's done by the system
+   */
+  userId?: any;
   [key: string]: any;
 }
+
 export interface IContextAware {
   context?: IExecutionContext;
 }

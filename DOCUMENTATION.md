@@ -381,10 +381,6 @@ import { Type } from "@kaviar/mongo-bundle";
 class User {
   _id: ObjectID;
   name: string;
-
-  // You need to tell class transformer what to resolve into
-  @Type(() => Comment)
-  comments: Comment[];
 }
 
 class Comment {
