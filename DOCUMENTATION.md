@@ -423,3 +423,23 @@ await dbService.transact((session) => {
 ```
 
 The beautiful thing is that any kind of exception will result in transaction revertion. If you want to have event listeners that don't fail transactions, you simply wrap them in such a way that their promises resolve.
+
+## Migrations
+
+Migrations allow you to version and easily add new changes to database while staying safe. Migrations are added in the `prepare()` phase of your bundles.
+
+```tsx
+const migrationService = this.container.get(MigrationService);
+migrationService.add({
+  version: 1,
+  name: "Do something",
+  async up(container) {
+    // Setup defaults for a certain collection
+  },
+  async down(container) {
+    // Revert the up() function, in case something goes wrong and you want to rollback
+  },
+});
+```
+
+By default migrations are run by default to latest version right after `MongoBundle` gets initialised.

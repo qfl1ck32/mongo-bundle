@@ -71,10 +71,3 @@ export interface IGetFieldsResponse {
   all: string[];
   top: string[];
 }
-
-export interface IMigrationConfig {
-  up: (container: ContainerInstance) => any;
-  down: (container: ContainerInstance) => any;
-  version: number;
-  name: string;
-}
