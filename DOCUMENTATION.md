@@ -443,3 +443,31 @@ migrationService.add({
 ```
 
 By default migrations are run by default to latest version right after `MongoBundle` gets initialised.
+
+```ts
+const migrationService = this.container.get(MigrationService);
+
+new MongoBundle({
+  uri: "...",
+  // Take control and disable auto migration
+  automigrate: false,
+});
+
+// Control it from here
+migrationService.migrateToLatest();
+migrationService.migrateTo(version);
+```
+
+The way we handle migrations is that we store in `migrations` collection a status object containing:
+
+```ts
+export interface IMigrationStatus {
+  version: number; // The current version
+  locked: boolean;
+  lockedAt?: Date;
+  lastError?: {
+    fromVersion: number;
+    message: string;
+  };
+}
+```

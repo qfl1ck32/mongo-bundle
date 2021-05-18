@@ -1,16 +1,9 @@
 import { ContainerInstance, Service } from "@kaviar/core";
 import { LoggerService } from "@kaviar/logger-bundle";
-import { MigrationsCollection } from "../models/MigrationsCollection";
-
-export interface IMigrationStatus {
-  version: number;
-  locked: boolean;
-  lockedAt?: Date;
-  lastError?: {
-    fromVersion: number;
-    message: string;
-  };
-}
+import {
+  IMigrationStatus,
+  MigrationsCollection,
+} from "../models/MigrationsCollection";
 
 export interface IMigrationConfig {
   up: (container: ContainerInstance) => any;
@@ -21,7 +14,7 @@ export interface IMigrationConfig {
 
 @Service()
 export class MigrationService {
-  migrationConfigs: IMigrationConfig[] = [];
+  public migrationConfigs: IMigrationConfig[] = [];
 
   constructor(
     protected migrationsCollection: MigrationsCollection,
@@ -32,6 +25,11 @@ export class MigrationService {
   add(config: IMigrationConfig) {
     if (this.getConfigByVersion(config.version)) {
       throw new Error(`You already have a migration added with this version.`);
+    }
+    if (config.version === 0 || config.version < 0) {
+      throw new Error(
+        `You can't add this version, select a positive number different from 0`
+      );
     }
     this.migrationConfigs.push(config);
     this.migrationConfigs = this.migrationConfigs.sort((a, b) => {
@@ -62,12 +60,17 @@ export class MigrationService {
   }
 
   async getStatus(): Promise<IMigrationStatus> {
-    const control = await this.migrationsCollection.findOne({ _id: "status" });
+    let control = await this.migrationsCollection.findOne({ _id: "status" });
     if (!control) {
-      await this.migrationsCollection.insertOne({
+      const lastMigration = this.migrationConfigs[
+        this.migrationConfigs.length - 1
+      ];
+      control = {
         _id: "status",
-        version: this.migrationConfigs[this.migrationConfigs.length - 1],
-      });
+        locked: false,
+        version: 0,
+      };
+      await this.migrationsCollection.insertOne(control);
     }
 
     return control;
@@ -121,20 +124,22 @@ export class MigrationService {
    */
   async migrateToLatest(): Promise<void> {
     if (this.migrationConfigs.length > 0) {
-      return this.migrateTo(
-        this.migrationConfigs[this.migrationConfigs.length - 1].version
-      );
+      const lastMigration = this.migrationConfigs[
+        this.migrationConfigs.length - 1
+      ];
+
+      return this.migrateTo(lastMigration.version);
     }
   }
 
-  async rerun(version: number) {
+  async rerun(version: number, direction: "up" | "down" = "up") {
     // We are now in locked mode and we can do our thingie
     this.logger.info("Rerunning version " + version);
-    this.run("up", this.getConfigByVersion(version));
+    await this.run(direction, this.getConfigByVersion(version));
     this.logger.info("Finished migrating.");
   }
 
-  async migrateTo(version: number) {
+  async migrateTo(version: number): Promise<void> {
     const status = await this.getStatus();
     let currentVersion = status.version;
 
@@ -154,24 +159,34 @@ export class MigrationService {
     );
     var endIdx = this.migrationConfigs.findIndex((c) => c.version === version);
 
-    // this.logger.info('startIdx:' + startIdx + ' endIdx:' + endIdx);
+    this.logger.info(`Bring it to: ${version}`);
+    this.logger.info("startIdx:" + startIdx + " endIdx:" + endIdx);
     this.logger.info(`Migrating from ${currentVersion} to ${version}`);
 
     try {
       if (currentVersion < version) {
         for (var i = startIdx; i < endIdx; i++) {
-          await this.run("up", this.migrationConfigs[i + 1]);
-          currentVersion = this.migrationConfigs[i + 1].version;
+          const migration = this.migrationConfigs[i + 1];
+          if (migration) {
+            await this.run("up", migration);
+            currentVersion = migration.version;
+          }
         }
       } else {
+        // When you're migrating to a version, you don't want to execute that down() version?
         for (var i = startIdx; i > endIdx; i--) {
-          await this.run("down", this.migrationConfigs[i + 1]);
-          currentVersion = this.migrationConfigs[i + 1].version;
+          const migration = this.migrationConfigs[i - 1];
+          if (migration) {
+            await this.run("down", migration);
+            currentVersion = migration.version;
+          }
         }
       }
     } catch (e) {
-      this.logger.error(`Error while migrating abort`);
-      this.updateStatus({
+      this.logger.error(
+        `Error while migrating from ${currentVersion}. Aborted migration. ${e.toString()}`
+      );
+      await this.updateStatus({
         lastError: {
           fromVersion: currentVersion,
           message: e.toString(),
