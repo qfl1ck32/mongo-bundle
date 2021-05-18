@@ -1,4 +1,5 @@
 import { Kernel, Bundle, ContainerInstance } from "@kaviar/core";
+import { LoggerBundle } from "@kaviar/logger-bundle";
 import { MongoBundle } from "../MongoBundle";
 import { DatabaseService } from "../services/DatabaseService";
 
@@ -9,6 +10,13 @@ export async function createEcosystem(
   kernel.addBundle(
     new MongoBundle({
       uri: "mongodb://localhost:27017/test",
+      automigrate: false,
+    })
+  );
+
+  kernel.addBundle(
+    new LoggerBundle({
+      console: false,
     })
   );
 

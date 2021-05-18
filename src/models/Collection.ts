@@ -91,7 +91,7 @@ export abstract class Collection<T = any> implements ICollection {
     return this.collection.collectionName;
   }
 
-  protected storeCollection() {
+  protected async storeCollection() {
     this.collection = this.databaseService.getMongoCollection(
       this.getStaticVariable("collectionName")
     );
@@ -102,7 +102,7 @@ export abstract class Collection<T = any> implements ICollection {
     // ensure indexes
     const indexes = this.getStaticVariable("indexes");
     if (indexes.length) {
-      this.collection.createIndexes(indexes);
+      await this.collection.createIndexes(indexes);
     }
 
     // attach behaviors

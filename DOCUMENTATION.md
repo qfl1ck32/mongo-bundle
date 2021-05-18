@@ -20,9 +20,12 @@ new MongoBundle({
 
 ## Collections
 
+A collection is in fact a service. Thus making it accessible via the `container`. We define our collections as extensions of `Collection` in which we can customise things such as: `collectionName`, `indexes`, `links`, `reducers`, `behaviors`.
+
 ```typescript
 import { Collection } from "@kaviar/mongo-bundle";
 
+// We can optionally create a type and have full typesafety
 type User = {
   firstName: string;
   lastName: string;
@@ -34,6 +37,8 @@ class UsersCollection extends Collection<User> {
   static indexes = [
     {
       key: { firstName: 1 },
+      // Other options can be found here in IndexSignature:
+      // https://github.com/DefinitelyTyped/DefinitelyTyped/blob/0543eca60008efb636775a21aec7b7f5e798682a/types/mongodb/index.d.ts#L3408
     },
   ];
 }
@@ -94,6 +99,8 @@ eventManager.addListener(AfterInsertEvent, async (e) => {
 Events should be attached in the `prepare()` phase of your bundle. The common strategy is by warming up a Listener, as described in the core.
 
 Events also receive a `context` variable. Another difference from classic MongoDB node collection operations is that we allow a `context` variable inside it that can be anything. That variable reaches the event listeners. It will be useful if we want to pass things such as an `userId` if we want some blameable behavior. You will understand more in the **Behaviors** section.
+
+If you want to perform certain actions for elements once they have been updated or removed (events: `AfterUpdateEvent` and `AfterRemoveEvent`) the solution is to get the filter and extract the `_id` from there.
 
 ## Integration with Nova
 
@@ -416,3 +423,51 @@ await dbService.transact((session) => {
 ```
 
 The beautiful thing is that any kind of exception will result in transaction revertion. If you want to have event listeners that don't fail transactions, you simply wrap them in such a way that their promises resolve.
+
+## Migrations
+
+Migrations allow you to version and easily add new changes to database while staying safe. Migrations are added in the `prepare()` phase of your bundles.
+
+```tsx
+const migrationService = this.container.get(MigrationService);
+migrationService.add({
+  version: 1,
+  name: "Do something",
+  async up(container) {
+    // Setup defaults for a certain collection
+  },
+  async down(container) {
+    // Revert the up() function, in case something goes wrong and you want to rollback
+  },
+});
+```
+
+By default migrations are run by default to latest version right after `MongoBundle` gets initialised.
+
+```ts
+const migrationService = this.container.get(MigrationService);
+
+new MongoBundle({
+  uri: "...",
+  // Take control and disable auto migration
+  automigrate: false,
+});
+
+// Control it from here
+migrationService.migrateToLatest();
+migrationService.migrateTo(version);
+```
+
+The way we handle migrations is that we store in `migrations` collection a status object containing:
+
+```ts
+export interface IMigrationStatus {
+  version: number; // The current version
+  locked: boolean;
+  lockedAt?: Date;
+  lastError?: {
+    fromVersion: number;
+    message: string;
+  };
+}
+```

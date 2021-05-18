@@ -1,6 +1,7 @@
 export { Collection } from "./models/Collection";
 export { Behaviors } from "./behaviors";
-export { DatabaseService } from "./services/DatabaseService";
+export * from "./services/DatabaseService";
+export * from "./services/MigrationService";
 export { MongoBundle } from "./MongoBundle";
 export { Exclude, Expose, Type, Transform } from "class-transformer";
 export { ObjectID } from "mongodb";
