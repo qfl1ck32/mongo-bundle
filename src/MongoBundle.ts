@@ -38,4 +38,12 @@ export class MongoBundle extends Bundle<IMongoBundleConfigType> {
       await migrationService.migrateToLatest();
     }
   }
+
+  /**
+   * Closign the connection to the database server
+   */
+  async shutdown() {
+    const databaseService = this.container.get(DatabaseService);
+    databaseService.client.close();
+  }
 }
