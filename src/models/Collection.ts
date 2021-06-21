@@ -40,7 +40,6 @@ import { BehaviorType, IContextAware, IBundleLinkOptions } from "../defs";
 import { toModel } from "@kaviar/ejson";
 import {
   query,
-  ICollection,
   ILinkOptions,
   QueryBodyType,
   IReducerOptions,
@@ -52,7 +51,7 @@ import {
 } from "@kaviar/nova";
 
 @Service()
-export abstract class Collection<T = any> implements ICollection {
+export abstract class Collection<T = any> {
   static model: any;
   static links: IBundleLinkOptions = {};
   static reducers: IReducerOptions = {};
@@ -439,7 +438,7 @@ export abstract class Collection<T = any> implements ICollection {
    * @param request
    */
   async query(request: QueryBodyType<T>): Promise<Array<Partial<T>>> {
-    const results = await query(this, request, {
+    const results = await query(this.collection, request, {
       container: this.container,
     }).fetch();
 
@@ -452,7 +451,7 @@ export abstract class Collection<T = any> implements ICollection {
    * @param request
    */
   async queryOne(request: QueryBodyType<T>): Promise<Partial<T>> {
-    const result = await query(this, request, {
+    const result = await query(this.collection, request, {
       container: this.container,
     }).fetchOne();
 
@@ -498,14 +497,15 @@ export abstract class Collection<T = any> implements ICollection {
       adaptedLinks[key] = {
         ...links[key],
         collection: () =>
-          this.getCollection(collectionBaseClassResolver(this.container)),
+          this.getCollection(collectionBaseClassResolver(this.container))
+            .collection,
       };
     }
 
     // blend with nova links, reducers, expanders
-    addLinks(this, adaptedLinks);
-    addReducers(this, this.getStaticVariable("reducers") || {});
-    addExpanders(this, this.getStaticVariable("expanders") || {});
+    addLinks(this.collection, adaptedLinks);
+    addReducers(this.collection, this.getStaticVariable("reducers") || {});
+    addExpanders(this.collection, this.getStaticVariable("expanders") || {});
   }
 
   /**
@@ -547,7 +547,7 @@ export abstract class Collection<T = any> implements ICollection {
     config?: IAstToQueryOptions
   ): Promise<Array<Partial<T>>> {
     const result = await query
-      .graphql(this, ast, config, {
+      .graphql(this.collection, ast, config, {
         container: this.container,
       })
       .fetch();
@@ -563,7 +563,7 @@ export abstract class Collection<T = any> implements ICollection {
   async queryOneGraphQL(ast, config?: IAstToQueryOptions): Promise<Partial<T>> {
     const model = this.getStaticVariable("model");
     const result = await query
-      .graphql(this, ast, config, {
+      .graphql(this.collection, ast, config, {
         container: this.container,
       })
       .fetchOne();

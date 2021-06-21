@@ -22,14 +22,14 @@
     "gen-doc": "typedoc ./src/index.ts --exclude ./src/__tests__ --out typeDocs --tsconfig tsconfig.json"
   },
   "dependencies": {
-    "@types/mongodb": "^3.5.16",
+    "@types/mongodb": "^3.6.18",
     "mongodb": "^3.5.7"
   },
   "peerDependencies": {
     "@kaviar/core": "^1.2.1",
-    "@kaviar/logger-bundle": "^1.0.0",
-    "@kaviar/nova": "^1.4.0",
     "@kaviar/ejson": "^1.2.7",
+    "@kaviar/logger-bundle": "^1.0.0",
+    "@kaviar/nova": "^1.5.0",
     "@kaviar/validator-bundle": "^1.0.0"
   },
   "devDependencies": {

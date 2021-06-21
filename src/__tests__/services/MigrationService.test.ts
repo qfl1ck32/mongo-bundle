@@ -14,7 +14,7 @@ import {
 import { DatabaseService } from "../../services/DatabaseService";
 import { MigrationService } from "../../services/MigrationService";
 
-describe.only("Migrations", () => {
+describe("Migrations", () => {
   it("Should work with basic migration and ensure all run", async () => {
     const { container, teardown } = await createEcosystem();
 
