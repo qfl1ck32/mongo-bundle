@@ -90,7 +90,10 @@ export abstract class Collection<T = any> {
     return this.collection.collectionName;
   }
 
-  protected async storeCollection() {
+  protected storeCollection() {
+    // attach behaviors
+    this.attachBehaviors();
+
     this.collection = this.databaseService.getMongoCollection(
       this.getStaticVariable("collectionName")
     );
@@ -101,11 +104,8 @@ export abstract class Collection<T = any> {
     // ensure indexes
     const indexes = this.getStaticVariable("indexes");
     if (indexes.length) {
-      await this.collection.createIndexes(indexes);
+      this.collection.createIndexes(indexes);
     }
-
-    // attach behaviors
-    this.attachBehaviors();
   }
 
   /**
