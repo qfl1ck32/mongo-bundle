@@ -10,7 +10,7 @@ export interface IMongoBundleConfigType {
   /**
    * Whether to run the migration in the initialisation phase automatically.
    */
-  automigrate: boolean;
+  automigrate?: boolean;
 }
 
 export class MongoBundle extends Bundle<IMongoBundleConfigType> {
