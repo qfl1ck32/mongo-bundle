@@ -236,4 +236,40 @@ describe("Collection", () => {
 
     await teardown();
   });
+
+  it("Should work with count", async () => {
+    const { container, teardown } = await createEcosystem();
+
+    const posts = container.get(Posts);
+
+    const postsCount = await posts.count();
+
+    assert.equal(postsCount, 0);
+
+    const postsToInsertCount = Math.ceil(5 + Math.random() * 20);
+
+    for (let i = 0; i < postsToInsertCount; ++i) {
+      await posts.insertOne({
+        title: `test-${i}`,
+      });
+    }
+
+    const allPostsCountAfterInsert = await posts.count();
+    const postsCountWithGivenTitle = await posts.count({
+      title: "test-1",
+    });
+
+    const postsCountLimit5 = await posts.count(
+      {},
+      {
+        limit: 5,
+      }
+    );
+
+    assert.equal(allPostsCountAfterInsert, postsToInsertCount);
+    assert.equal(postsCountWithGivenTitle, 1);
+    assert.equal(postsCountLimit5, 5);
+
+    teardown();
+  });
 });
