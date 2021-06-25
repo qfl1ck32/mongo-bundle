@@ -17,6 +17,7 @@ import {
   FindOneOptions,
   Cursor,
   FindOneAndDeleteOption,
+  MongoCountPreferences,
 } from "mongodb";
 import {
   Inject,
@@ -123,6 +124,20 @@ export abstract class Collection<T = any> {
     };
 
     return cursor;
+  }
+
+  /**
+   * Count number of documents
+   * @param filter
+   * @param options
+   * @returns
+   */
+
+  async count(
+    filter: FilterQuery<T> = {},
+    options?: MongoCountPreferences
+  ): Promise<number> {
+    return await this.collection.countDocuments(filter, options);
   }
 
   /**
