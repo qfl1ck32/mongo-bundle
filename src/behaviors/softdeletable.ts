@@ -2,6 +2,8 @@ import { BehaviorType, ISoftdeletableBehaviorOptions } from "../defs";
 import { Collection } from "../models/Collection";
 import { FilterQuery, CollectionAggregationOptions } from "mongodb";
 import { BeforeRemoveEvent, AfterRemoveEvent } from "../events";
+import { IAstToQueryOptions } from "../../../nova/dist/core/defs";
+import { QueryBodyType } from "@kaviar/nova";
 
 export default function softdeletable(
   options: ISoftdeletableBehaviorOptions = {}
@@ -24,6 +26,11 @@ export default function softdeletable(
 
   return (collection: Collection<any>) => {
     // To refactor, deleteOne and deleteMany share so much code, that it can be put in 1.
+    collection.onInit(() => {
+      collection.collection.createIndex({
+        [fields.isDeleted]: 1,
+      });
+    });
 
     collection.deleteOne = async (filter: FilterQuery<any>, options?: any) => {
       await collection.emit(
@@ -137,13 +144,49 @@ export default function softdeletable(
 
       return oldAggregate.call(collection, pipeline, options);
     };
+
+    const oldQuery = collection.query;
+    collection.query = (request: QueryBodyType<any>): Promise<any[]> => {
+      if (!request.$) {
+        request.$ = {};
+      } else {
+        if (!request.$.filters) {
+          request.$.filters = {};
+        }
+      }
+      request.$.filters = getPreparedFiltersForSoftdeletion(
+        request.$.filters,
+        fields.isDeleted
+      );
+
+      return oldQuery.call(collection, request);
+    };
+
+    const oldQueryGraphQL = collection.queryGraphQL;
+    collection.queryGraphQL = (
+      ast: any,
+      config?: IAstToQueryOptions
+    ): Promise<any[]> => {
+      if (!config) {
+        config = {};
+      }
+      if (!config.filters) {
+        config.filters = {};
+      }
+      config.filters = getPreparedFiltersForSoftdeletion(
+        config.filters,
+        fields.isDeleted
+      );
+
+      return oldQueryGraphQL.call(collection, ast, config);
+    };
   };
 }
 
-function getPreparedFiltersForSoftdeletion(filter, isDeletedField) {
-  if (filter[isDeletedField] === undefined) {
+function getPreparedFiltersForSoftdeletion(filter, deleteFieldName) {
+  if (filter[deleteFieldName] === undefined) {
     filter = Object.assign({}, filter);
-    filter[isDeletedField] = {
+    filter[deleteFieldName] = {
       $ne: true,
     };
   }

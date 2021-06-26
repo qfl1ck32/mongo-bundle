@@ -1,6 +1,6 @@
 {
   "name": "@kaviar/mongo-bundle",
-  "version": "1.2.3",
+  "version": "1.3.0",
   "description": "Easy MongoDB solution designed for Kaviar Framework.",
   "main": "dist/index.js",
   "repository": {
@@ -29,7 +29,7 @@
     "@kaviar/core": "^1.2.1",
     "@kaviar/ejson": "^1.2.7",
     "@kaviar/logger-bundle": "^1.0.0",
-    "@kaviar/nova": "^1.5.0",
+    "@kaviar/nova": "^1.6.2",
     "@kaviar/validator-bundle": "^1.0.0"
   },
   "devDependencies": {

@@ -61,6 +61,8 @@ export abstract class Collection<T = any> {
 
   static collectionName: string;
 
+  public isInitialised: boolean = false;
+  protected onInitFunctions: Function[] = [];
   public collection: MongoCollection<T>;
   /**
    * Refers to the event manager that is only within this collection's context
@@ -78,10 +80,10 @@ export abstract class Collection<T = any> {
     this.localEventManager = new EventManager();
 
     if (databaseService.isInitialised) {
-      this.storeCollection();
+      this.initialise();
     } else {
       databaseService.afterInit(() => {
-        this.storeCollection();
+        this.initialise();
       });
     }
   }
@@ -90,7 +92,7 @@ export abstract class Collection<T = any> {
     return this.collection.collectionName;
   }
 
-  protected storeCollection() {
+  protected initialise() {
     // attach behaviors
     this.attachBehaviors();
 
@@ -106,6 +108,9 @@ export abstract class Collection<T = any> {
     if (indexes.length) {
       this.collection.createIndexes(indexes);
     }
+
+    this.isInitialised = true;
+    this.onInitFunctions.forEach((fn) => fn());
   }
 
   /**
@@ -451,11 +456,9 @@ export abstract class Collection<T = any> {
    * @param request
    */
   async queryOne(request: QueryBodyType<T>): Promise<Partial<T>> {
-    const result = await query(this.collection, request, {
-      container: this.container,
-    }).fetchOne();
+    const result = await this.query(request);
 
-    return this.toModel(result);
+    return result[0] || null;
   }
 
   /**
@@ -561,14 +564,9 @@ export abstract class Collection<T = any> {
    * @param config
    */
   async queryOneGraphQL(ast, config?: IAstToQueryOptions): Promise<Partial<T>> {
-    const model = this.getStaticVariable("model");
-    const result = await query
-      .graphql(this.collection, ast, config, {
-        container: this.container,
-      })
-      .fetchOne();
+    const result = await this.queryGraphQL(ast, config);
 
-    return this.toModel(result);
+    return result[0] || null;
   }
 
   /**
@@ -579,5 +577,13 @@ export abstract class Collection<T = any> {
     event.setCollection(this);
     await this.localEventManager.emit(event);
     await this.globalEventManager.emit(event);
+  }
+
+  onInit(fn: Function) {
+    if (this.isInitialised) {
+      fn();
+    } else {
+      this.onInitFunctions.push(fn);
+    }
   }
 }
