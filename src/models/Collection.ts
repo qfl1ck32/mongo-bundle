@@ -51,17 +51,6 @@ import {
   IAstToQueryOptions,
 } from "@kaviar/nova";
 
-interface IStaticVariable {
-  model: any;
-  links: IBundleLinkOptions;
-  reducers: IReducerOptions;
-  expanders: IExpanderOptions;
-  indexes: IndexSpecification[];
-  behaviors: BehaviorType[];
-
-  collectionName: string;
-}
-
 @Service()
 export abstract class Collection<T = any> {
   static model: any;
@@ -501,10 +490,8 @@ export abstract class Collection<T = any> {
    *
    * @param variable
    */
-  protected getStaticVariable<T extends keyof IStaticVariable>(variable: T) {
-    return (this.constructor as typeof Collection)[
-      variable
-    ] as IStaticVariable[T];
+  protected getStaticVariable<T extends keyof typeof Collection>(variable: T) {
+    return (this.constructor as typeof Collection)[variable];
   }
 
   /**
