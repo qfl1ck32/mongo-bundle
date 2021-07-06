@@ -61,6 +61,7 @@ You have access to directly perform the more popular mutation operations:
 - updateMany
 - deleteOne
 - deleteMany
+- count
 - aggregate
 - find
 - findOne

@@ -5,7 +5,7 @@ import { DatabaseService } from "../services/DatabaseService";
 
 export async function createEcosystem(
   init?: any
-): Promise<{ container: ContainerInstance; teardown: () => void }> {
+): Promise<{ container: ContainerInstance; teardown: () => Promise<void> }> {
   const kernel = new Kernel();
   kernel.addBundle(
     new MongoBundle({

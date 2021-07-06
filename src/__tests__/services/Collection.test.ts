@@ -1,5 +1,5 @@
 import { createEcosystem } from "../helpers";
-import { Comments } from "./dummy/comments";
+import { Comments, Comment } from "./dummy/comments";
 import { Posts, Post } from "./dummy/posts";
 import { Users, User } from "./dummy/users";
 import { assert, expect } from "chai";
@@ -233,6 +233,75 @@ describe("Collection", () => {
 
     result = await posts.findOneAndDelete({ _id: p1.insertedId });
     assert.instanceOf(result.value, Post);
+
+    await teardown();
+  });
+
+  it("Should work with count", async () => {
+    const { container, teardown } = await createEcosystem();
+
+    const posts = container.get(Posts);
+
+    const postsCount = await posts.count();
+
+    assert.equal(postsCount, 0);
+
+    const postsToInsertCount = Math.ceil(5 + Math.random() * 10);
+
+    for (let i = 0; i < postsToInsertCount; ++i) {
+      await posts.insertOne({
+        title: `test-${i}`,
+      });
+    }
+
+    const allPostsCountAfterInsert = await posts.count();
+    const postsCountWithGivenTitle = await posts.count({
+      title: "test-1",
+    });
+
+    const postsCountLimit5 = await posts.count(
+      {},
+      {
+        limit: 5,
+      }
+    );
+
+    assert.equal(allPostsCountAfterInsert, postsToInsertCount);
+    assert.equal(postsCountWithGivenTitle, 1);
+    assert.equal(postsCountLimit5, 5);
+
+    await teardown();
+  });
+
+  it("Should work with count when having softdeletable behavior (deleteOne, deleteMany)", async () => {
+    const { container, teardown } = await createEcosystem();
+
+    const comments = container.get(Comments);
+
+    const _id = (await comments.insertOne({ title: "test" })).insertedId;
+    await comments.deleteOne({ _id });
+
+    const commentsCount = await comments.count();
+    assert.equal(commentsCount, 0);
+
+    const randomNumberOfComments = Math.ceil(5 + Math.random() * 10);
+
+    const commentsArray = new Array<Comment>(randomNumberOfComments)
+      .fill(null)
+      .map(
+        (_, index) =>
+          ({
+            title: `test-${index}`,
+          } as Comment)
+      );
+
+    await comments.insertMany(commentsArray);
+
+    assert.equal(await comments.count(), randomNumberOfComments);
+
+    await comments.deleteMany({});
+
+    assert.equal(await comments.count(), 0);
 
     await teardown();
   });

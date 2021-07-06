@@ -17,6 +17,7 @@ import {
   FindOneOptions,
   Cursor,
   FindOneAndDeleteOption,
+  MongoCountPreferences,
 } from "mongodb";
 import {
   Inject,
@@ -57,7 +58,7 @@ export abstract class Collection<T = any> {
   static reducers: IReducerOptions = {};
   static expanders: IExpanderOptions = {};
   static indexes: IndexSpecification[] = [];
-  static behaviors: any = [];
+  static behaviors: BehaviorType[] = [];
 
   static collectionName: string;
 
@@ -128,6 +129,20 @@ export abstract class Collection<T = any> {
     };
 
     return cursor;
+  }
+
+  /**
+   * Count number of documents
+   * @param filter
+   * @param options
+   * @returns
+   */
+
+  async count(
+    filter: FilterQuery<T> = {},
+    options?: MongoCountPreferences
+  ): Promise<number> {
+    return this.collection.countDocuments(filter, options);
   }
 
   /**
@@ -475,7 +490,7 @@ export abstract class Collection<T = any> {
    *
    * @param variable
    */
-  protected getStaticVariable(variable) {
+  protected getStaticVariable<T extends keyof typeof Collection>(variable: T) {
     return (this.constructor as typeof Collection)[variable];
   }
 
@@ -483,7 +498,7 @@ export abstract class Collection<T = any> {
    * This runs the behavior attachment process
    */
   protected attachBehaviors() {
-    const behaviors: BehaviorType[] = this.getStaticVariable("behaviors");
+    const behaviors = this.getStaticVariable("behaviors");
 
     behaviors.forEach((behavior) => {
       behavior(this);
