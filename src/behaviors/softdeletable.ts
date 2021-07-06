@@ -2,7 +2,9 @@ import { IAstToQueryOptions, QueryBodyType } from "@kaviar/nova";
 import {
   CollectionAggregationOptions,
   CommonOptions,
+  DeleteWriteOpResultObject,
   FilterQuery,
+  UpdateWriteOpResult,
 } from "mongodb";
 import {
   BehaviorType,
@@ -12,14 +14,20 @@ import {
 import { AfterRemoveEvent, BeforeRemoveEvent } from "../events";
 import { Collection } from "../models/Collection";
 
-interface IDeleteOneOrManySettings {
-  isMany: boolean;
-}
+const overridableMethods = [
+  "find",
+  "findOne",
+  "findOneAndDelete",
+  "findOneAndUpdate",
+  "updateOne",
+  "updateMany",
+  "count",
+];
 
 export default function softdeletable(
   options: ISoftdeletableBehaviorOptions = {}
 ): BehaviorType {
-  const fields = Object.assign(
+  options.fields = Object.assign(
     {
       isDeleted: "isDeleted",
       deletedAt: "deletedAt",
@@ -27,86 +35,19 @@ export default function softdeletable(
     },
     options.fields
   );
-
-  const userIdFieldInContext = "userId";
-
-  const extractUserID = (context: any) => {
-    if (!context) {
-      return null;
-    }
-
-    return context[userIdFieldInContext] || null;
-  };
-
-  const deleteOneOrMany = async (
-    filter: FilterQuery<any>,
-    options: IContextAware & CommonOptions,
-    collection: Collection<any>,
-    settings: IDeleteOneOrManySettings
-  ) => {
-    const { isMany } = settings;
-
-    await collection.emit(
-      new BeforeRemoveEvent({
-        filter,
-        isMany,
-        context: options?.context,
-      })
-    );
-
-    const updateMethod = (
-      isMany
-        ? collection.collection.updateMany
-        : collection.collection.updateOne
-    ).bind(collection.collection);
-
-    // We do it directly on the collection to avoid event dispatching
-    const result = await updateMethod(
-      getPreparedFiltersForSoftdeletion(filter, fields.isDeleted),
-      {
-        $set: {
-          [fields.isDeleted]: true,
-          [fields.deletedAt]: new Date(),
-          [fields.deletedBy]: extractUserID(options?.context),
-        },
-      },
-      options
-    );
-
-    await collection.emit(
-      new AfterRemoveEvent({
-        filter,
-        isMany,
-        context: options?.context,
-        result,
-      })
-    );
-
-    // Hackish, should we "map" it to the DeleteWriteREsponse?
-    return result as any;
-  };
+  const { fields } = options;
 
   return (collection: Collection<any>) => {
-    collection.deleteOne = async (filter, options) => {
-      return deleteOneOrMany(filter, options, collection, { isMany: false });
+    collection.deleteOne = async (filter, _options) => {
+      return emulateDeletion(collection, filter, _options, options, false);
     };
 
-    collection.deleteMany = async (filter, options) => {
-      return deleteOneOrMany(filter, options, collection, { isMany: true });
+    collection.deleteMany = async (filter, _options) => {
+      return emulateDeletion(collection, filter, _options, options, true);
     };
-
-    const overrides = [
-      "find",
-      "findOne",
-      "findOneAndDelete",
-      "findOneAndUpdate",
-      "updateOne",
-      "updateMany",
-      "count",
-    ];
 
     // For all of them the filter field is the first argument
-    overrides.forEach((override) => {
+    overridableMethods.forEach((override) => {
       const old = collection[override];
       collection[override] = (filter: FilterQuery<any>, ...args: any[]) => {
         return old.call(
@@ -144,19 +85,16 @@ export default function softdeletable(
 
     const oldQuery = collection.query;
     collection.query = (request: QueryBodyType<any>): Promise<any[]> => {
-      if (!request.$) {
-        request.$ = {};
-      } else {
-        if (!request.$.filters) {
-          request.$.filters = {};
-        }
-      }
-      request.$.filters = getPreparedFiltersForSoftdeletion(
-        request.$.filters,
-        fields.isDeleted
-      );
+      prepareQueryOptions(request, options);
 
       return oldQuery.call(collection, request);
+    };
+
+    const oldQueryOne = collection.queryOne;
+    collection.queryOne = (request: QueryBodyType<any>): Promise<any> => {
+      prepareQueryOptions(request, options);
+
+      return oldQueryOne.call(collection, request);
     };
 
     const oldQueryGraphQL = collection.queryGraphQL;
@@ -164,20 +102,57 @@ export default function softdeletable(
       ast: any,
       config?: IAstToQueryOptions
     ): Promise<any[]> => {
-      if (!config) {
-        config = {};
-      }
-      if (!config.filters) {
-        config.filters = {};
-      }
-      config.filters = getPreparedFiltersForSoftdeletion(
-        config.filters,
-        fields.isDeleted
-      );
+      config = prepareQueryGraphQLOptions(config || {}, options);
 
       return oldQueryGraphQL.call(collection, ast, config);
     };
+
+    const oldQueryOneGraphQL = collection.queryOneGraphQL;
+    collection.queryOneGraphQL = (
+      ast: any,
+      config?: IAstToQueryOptions
+    ): Promise<any[]> => {
+      config = prepareQueryGraphQLOptions(config || {}, options);
+
+      return oldQueryOneGraphQL.call(collection, ast, config);
+    };
   };
+}
+
+function prepareQueryGraphQLOptions(
+  config: IAstToQueryOptions<null>,
+  options: ISoftdeletableBehaviorOptions
+) {
+  const { fields } = options;
+  if (!config) {
+    config = {};
+  }
+  if (!config.filters) {
+    config.filters = {};
+  }
+  config.filters = getPreparedFiltersForSoftdeletion(
+    config.filters,
+    fields.isDeleted
+  );
+  return config;
+}
+
+function prepareQueryOptions(
+  request: QueryBodyType<any>,
+  options: ISoftdeletableBehaviorOptions
+) {
+  const { fields } = options;
+  if (!request.$) {
+    request.$ = {};
+  } else {
+    if (!request.$.filters) {
+      request.$.filters = {};
+    }
+  }
+  request.$.filters = getPreparedFiltersForSoftdeletion(
+    request.$.filters,
+    fields.isDeleted
+  );
 }
 
 function getPreparedFiltersForSoftdeletion(
@@ -193,4 +168,75 @@ function getPreparedFiltersForSoftdeletion(
   }
 
   return filter;
+}
+
+function extractUserID(context: any) {
+  if (!context) {
+    return null;
+  }
+
+  return context["userId"] || null;
+}
+
+/**
+ * This function is responsible of marking an update and simulating an actual delete
+ *
+ * @param filter
+ * @param options
+ * @param collection
+ * @param settings
+ * @returns
+ */
+async function emulateDeletion(
+  collection: Collection<any>,
+  filter: FilterQuery<any>,
+  options: IContextAware & CommonOptions,
+  softdeleteOptions: ISoftdeletableBehaviorOptions,
+  isMany: boolean
+): Promise<DeleteWriteOpResultObject> {
+  await collection.emit(
+    new BeforeRemoveEvent({
+      filter,
+      isMany,
+      context: options?.context,
+    })
+  );
+
+  const mongoCollection = collection.collection;
+
+  // We do it directly on the collection to avoid event dispatching
+  const { fields } = softdeleteOptions;
+  const result = (await mongoCollection[
+    isMany ? "updateMany" : "updateOne"
+  ].call(
+    mongoCollection,
+    getPreparedFiltersForSoftdeletion(filter, fields.isDeleted),
+    {
+      $set: {
+        [softdeleteOptions.fields.isDeleted]: true,
+        [fields.deletedAt]: new Date(),
+        [fields.deletedBy]: extractUserID(options?.context),
+      },
+    },
+    options
+  )) as UpdateWriteOpResult;
+
+  await collection.emit(
+    new AfterRemoveEvent({
+      filter,
+      isMany,
+      context: options?.context,
+      result,
+    })
+  );
+
+  // Hackish, should we "map" it to the DeleteWriteREsponse?
+  return {
+    result: {
+      ok: result.result.ok,
+      n: result.result.n,
+    },
+    connection: result.connection,
+    deletedCount: result.result.nModified,
+  };
 }
