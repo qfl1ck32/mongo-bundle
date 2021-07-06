@@ -51,6 +51,17 @@ import {
   IAstToQueryOptions,
 } from "@kaviar/nova";
 
+interface IStaticVariable {
+  model: any;
+  links: IBundleLinkOptions;
+  reducers: IReducerOptions;
+  expanders: IExpanderOptions;
+  indexes: IndexSpecification[];
+  behaviors: BehaviorType[];
+
+  collectionName: string;
+}
+
 @Service()
 export abstract class Collection<T = any> {
   static model: any;
@@ -58,7 +69,7 @@ export abstract class Collection<T = any> {
   static reducers: IReducerOptions = {};
   static expanders: IExpanderOptions = {};
   static indexes: IndexSpecification[] = [];
-  static behaviors: any = [];
+  static behaviors: BehaviorType[] = [];
 
   static collectionName: string;
 
@@ -137,7 +148,7 @@ export abstract class Collection<T = any> {
     filter: FilterQuery<T> = {},
     options?: MongoCountPreferences
   ): Promise<number> {
-    return await this.collection.countDocuments(filter, options);
+    return this.collection.countDocuments(filter, options);
   }
 
   /**
@@ -487,15 +498,17 @@ export abstract class Collection<T = any> {
    *
    * @param variable
    */
-  protected getStaticVariable(variable) {
-    return (this.constructor as typeof Collection)[variable];
+  protected getStaticVariable<T extends keyof IStaticVariable>(variable: T) {
+    return (this.constructor as typeof Collection)[
+      variable
+    ] as IStaticVariable[T];
   }
 
   /**
    * This runs the behavior attachment process
    */
   protected attachBehaviors() {
-    const behaviors: BehaviorType[] = this.getStaticVariable("behaviors");
+    const behaviors = this.getStaticVariable("behaviors");
 
     behaviors.forEach((behavior) => {
       behavior(this);
