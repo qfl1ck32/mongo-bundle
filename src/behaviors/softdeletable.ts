@@ -230,7 +230,6 @@ async function emulateDeletion(
     })
   );
 
-  // Hackish, should we "map" it to the DeleteWriteREsponse?
   return {
     result: {
       ok: result.result.ok,
