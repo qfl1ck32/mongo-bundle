@@ -564,9 +564,13 @@ export abstract class Collection<T = any> {
    * @param config
    */
   async queryOneGraphQL(ast, config?: IAstToQueryOptions): Promise<Partial<T>> {
-    const result = await this.queryGraphQL(ast, config);
+    const result = await query
+      .graphql(this.collection, ast, config, {
+        container: this.container,
+      })
+      .fetchOne();
 
-    return result[0] || null;
+    return this.toModel(result);
   }
 
   /**
