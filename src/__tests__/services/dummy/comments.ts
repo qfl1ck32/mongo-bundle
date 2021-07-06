@@ -2,6 +2,7 @@ import { Collection, Type } from "../../..";
 import { ObjectID } from "mongodb";
 import { User, Users } from "./users";
 import { Post, Posts } from "./posts";
+import { Behaviors } from "../../../behaviors";
 
 export class Comment {
   _id: ObjectID;
@@ -58,4 +59,12 @@ export class Comments extends Collection<Comment> {
       userId: 1,
     },
   };
+
+  static behaviors = [
+    Behaviors.Softdeletable({
+      fields: {
+        isDeleted: "customIsDeletedField",
+      },
+    }),
+  ];
 }
