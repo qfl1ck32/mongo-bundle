@@ -18,11 +18,9 @@ export class Comment {
   }
 
   userId: ObjectID;
-  @Type(() => User)
   user: User;
 
   postId: ObjectID;
-  @Type(() => Post)
   post: Post;
 }
 

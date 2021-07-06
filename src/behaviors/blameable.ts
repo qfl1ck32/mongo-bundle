@@ -10,6 +10,8 @@ export default function blameable(
     createdBy: "createdBy",
     updatedBy: "updatedBy",
   };
+  const throwErrorWhenMissing = options.throwErrorWhenMissing || false;
+
   const userIdFieldInContext = "userId";
 
   const extractUserID = (context) => {
@@ -17,7 +19,15 @@ export default function blameable(
       return null;
     }
 
-    return context[userIdFieldInContext] || null;
+    return context[userIdFieldInContext];
+  };
+
+  const checkUserId = (userId, collection: Collection<any>) => {
+    if (userId === undefined && throwErrorWhenMissing) {
+      throw new Error(
+        `You have to provide { userId } inside the context when you perform this insert mutation on ${collection.collectionName} collection.`
+      );
+    }
   };
 
   return (collection: Collection<any>) => {
@@ -25,6 +35,8 @@ export default function blameable(
       BeforeInsertEvent,
       (e: BeforeInsertEvent) => {
         const userId = extractUserID(e.data.context);
+        checkUserId(userId, collection);
+
         const document = e.data.document;
 
         Object.assign(document, {
@@ -38,6 +50,8 @@ export default function blameable(
       BeforeUpdateEvent,
       (e: BeforeUpdateEvent) => {
         const userId = extractUserID(e.data.context);
+        checkUserId(userId, collection);
+
         const update = e.data.update;
 
         if (!update.$set) {

@@ -1,3 +1,4 @@
+import { IAstToQueryOptions, QueryBodyType } from "@kaviar/nova";
 import {
   CollectionAggregationOptions,
   CommonOptions,
@@ -139,6 +140,42 @@ export default function softdeletable(
       }
 
       return oldAggregate.call(collection, pipeline, options);
+    };
+
+    const oldQuery = collection.query;
+    collection.query = (request: QueryBodyType<any>): Promise<any[]> => {
+      if (!request.$) {
+        request.$ = {};
+      } else {
+        if (!request.$.filters) {
+          request.$.filters = {};
+        }
+      }
+      request.$.filters = getPreparedFiltersForSoftdeletion(
+        request.$.filters,
+        fields.isDeleted
+      );
+
+      return oldQuery.call(collection, request);
+    };
+
+    const oldQueryGraphQL = collection.queryGraphQL;
+    collection.queryGraphQL = (
+      ast: any,
+      config?: IAstToQueryOptions
+    ): Promise<any[]> => {
+      if (!config) {
+        config = {};
+      }
+      if (!config.filters) {
+        config.filters = {};
+      }
+      config.filters = getPreparedFiltersForSoftdeletion(
+        config.filters,
+        fields.isDeleted
+      );
+
+      return oldQueryGraphQL.call(collection, ast, config);
     };
   };
 }

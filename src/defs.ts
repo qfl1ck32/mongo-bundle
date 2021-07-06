@@ -46,6 +46,11 @@ export interface IBlameableBehaviorOptions {
     updatedBy?: string;
     createdBy?: string;
   };
+  /**
+   * Enabling this will check if `userId` is not undefined, if it is it will throw an error, userId can still be `null` because the system does the operation (in a cronjob for example)
+   * You can regard it as a safety net to avoid mistakes.
+   */
+  throwErrorWhenMissing?: boolean;
 }
 
 export interface ISoftdeletableBehaviorOptions {
@@ -55,8 +60,6 @@ export interface ISoftdeletableBehaviorOptions {
     deletedBy?: string;
   };
 }
-
-type Modify<T, R> = Omit<T, keyof R> & R;
 
 export interface IBundleLinkCollectionOption
   extends Omit<ILinkCollectionOptions, "collection"> {
