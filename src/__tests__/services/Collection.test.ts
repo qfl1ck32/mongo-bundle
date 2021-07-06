@@ -270,6 +270,17 @@ describe("Collection", () => {
     assert.equal(postsCountWithGivenTitle, 1);
     assert.equal(postsCountLimit5, 5);
 
-    teardown();
+    // comments have softdeletable behavior
+    const comments = container.get(Comments);
+
+    const _id = (await comments.insertOne({ title: "test" })).insertedId;
+
+    await comments.deleteOne({ _id });
+
+    const commentsCount = await comments.count();
+
+    assert.equal(commentsCount, 0);
+
+    await teardown();
   });
 });
