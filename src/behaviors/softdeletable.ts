@@ -1,20 +1,35 @@
-import { BehaviorType, ISoftdeletableBehaviorOptions } from "../defs";
+import {
+  CollectionAggregationOptions,
+  CommonOptions,
+  FilterQuery,
+} from "mongodb";
+import {
+  BehaviorType,
+  IContextAware,
+  ISoftdeletableBehaviorOptions,
+} from "../defs";
+import { AfterRemoveEvent, BeforeRemoveEvent } from "../events";
 import { Collection } from "../models/Collection";
-import { FilterQuery, CollectionAggregationOptions } from "mongodb";
-import { BeforeRemoveEvent, AfterRemoveEvent } from "../events";
+
+interface IDeleteOneOrManySettings {
+  isMany: boolean;
+}
 
 export default function softdeletable(
   options: ISoftdeletableBehaviorOptions = {}
 ): BehaviorType {
-  const fields = options.fields || {
-    isDeleted: "isDeleted",
-    deletedAt: "deletedAt",
-    deletedBy: "deletedBy",
-  };
+  const fields = Object.assign(
+    {
+      isDeleted: "isDeleted",
+      deletedAt: "deletedAt",
+      deletedBy: "deletedBy",
+    },
+    options.fields
+  );
 
   const userIdFieldInContext = "userId";
 
-  const extractUserID = (context) => {
+  const extractUserID = (context: any) => {
     if (!context) {
       return null;
     }
@@ -22,74 +37,61 @@ export default function softdeletable(
     return context[userIdFieldInContext] || null;
   };
 
+  const deleteOneOrMany = async (
+    filter: FilterQuery<any>,
+    options: IContextAware & CommonOptions,
+    collection: Collection<any>,
+    settings: IDeleteOneOrManySettings
+  ) => {
+    const { isMany } = settings;
+
+    await collection.emit(
+      new BeforeRemoveEvent({
+        filter,
+        isMany,
+        context: options?.context,
+      })
+    );
+
+    const updateMethod = (
+      isMany
+        ? collection.collection.updateMany
+        : collection.collection.updateOne
+    ).bind(collection.collection);
+
+    // We do it directly on the collection to avoid event dispatching
+    const result = await updateMethod(
+      getPreparedFiltersForSoftdeletion(filter, fields.isDeleted),
+      {
+        $set: {
+          [fields.isDeleted]: true,
+          [fields.deletedAt]: new Date(),
+          [fields.deletedBy]: extractUserID(options?.context),
+        },
+      },
+      options
+    );
+
+    await collection.emit(
+      new AfterRemoveEvent({
+        filter,
+        isMany,
+        context: options?.context,
+        result,
+      })
+    );
+
+    // Hackish, should we "map" it to the DeleteWriteREsponse?
+    return result as any;
+  };
+
   return (collection: Collection<any>) => {
-    // To refactor, deleteOne and deleteMany share so much code, that it can be put in 1.
-
-    collection.deleteOne = async (filter: FilterQuery<any>, options?: any) => {
-      await collection.emit(
-        new BeforeRemoveEvent({
-          filter,
-          isMany: false,
-          context: options?.context,
-        })
-      );
-
-      // We do it directly on the collection to avoid event dispatching
-      const result = await collection.collection.updateOne(
-        getPreparedFiltersForSoftdeletion(filter, fields.isDeleted),
-        {
-          $set: {
-            [fields.isDeleted]: true,
-            [fields.deletedAt]: new Date(),
-            [fields.deletedBy]: extractUserID(options?.context),
-          },
-        }
-      );
-
-      await collection.emit(
-        new AfterRemoveEvent({
-          filter,
-          isMany: false,
-          context: options?.context,
-          result,
-        })
-      );
-
-      // Hackish, should we "map" it to the DeleteWriteREsponse?
-      return result as any;
+    collection.deleteOne = async (filter, options) => {
+      return deleteOneOrMany(filter, options, collection, { isMany: false });
     };
 
-    collection.deleteMany = async (filter: FilterQuery<any>, options?: any) => {
-      await collection.emit(
-        new BeforeRemoveEvent({
-          filter,
-          isMany: true,
-          context: options?.context,
-        })
-      );
-
-      // We do it directly on the collection to avoid event dispatching
-      const result = await collection.collection.updateMany(
-        getPreparedFiltersForSoftdeletion(filter, fields.isDeleted),
-        {
-          $set: {
-            [fields.isDeleted]: true,
-            [fields.deletedAt]: new Date(),
-            [fields.deletedBy]: extractUserID(options?.context),
-          },
-        },
-        options
-      );
-
-      await collection.emit(
-        new BeforeRemoveEvent({
-          filter,
-          isMany: true,
-          context: options?.context,
-        })
-      );
-
-      return result as any;
+    collection.deleteMany = async (filter, options) => {
+      return deleteOneOrMany(filter, options, collection, { isMany: true });
     };
 
     const overrides = [
@@ -99,6 +101,7 @@ export default function softdeletable(
       "findOneAndUpdate",
       "updateOne",
       "updateMany",
+      "count",
     ];
 
     // For all of them the filter field is the first argument
@@ -140,7 +143,11 @@ export default function softdeletable(
   };
 }
 
-function getPreparedFiltersForSoftdeletion(filter, isDeletedField) {
+function getPreparedFiltersForSoftdeletion(
+  filter: FilterQuery<any>,
+  isDeletedField: string
+) {
+  filter = Object.assign({}, filter);
   if (filter[isDeletedField] === undefined) {
     filter = Object.assign({}, filter);
     filter[isDeletedField] = {
