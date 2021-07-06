@@ -1,5 +1,10 @@
 # Change Log
 
+## v1.4.0
+
+- Added .count() at collection level which works with softdeletable
+- Improved typings and other stability fixes
+
 ## v1.3.0
 
 - Improved Softdeletable, Nova integration and Blameable behavior
