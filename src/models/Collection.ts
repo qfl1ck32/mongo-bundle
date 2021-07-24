@@ -562,7 +562,7 @@ export abstract class Collection<T = any> {
    */
   async queryGraphQL(
     ast: any,
-    config?: IAstToQueryOptions
+    config?: IAstToQueryOptions<T>
   ): Promise<Array<Partial<T>>> {
     const result = await query
       .graphql(this.collection, ast, config, {
@@ -578,7 +578,7 @@ export abstract class Collection<T = any> {
    * @param ast
    * @param config
    */
-  async queryOneGraphQL(ast, config?: IAstToQueryOptions): Promise<Partial<T>> {
+  async queryOneGraphQL(ast, config?: IAstToQueryOptions<T>): Promise<Partial<T>> {
     const result = await query
       .graphql(this.collection, ast, config, {
         container: this.container,
